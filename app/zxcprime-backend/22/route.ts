@@ -88,12 +88,12 @@ export async function GET(req: NextRequest) {
       title: title,
       year: String(year),
     });
+
     if (mediaType === "tv" && season) showboxQs.set("season", String(season));
     if (mediaType === "tv" && episode)
       showboxQs.set("episode", String(episode));
 
     const showboxData = await fetchShowBox(showboxQs);
-
     if (!showboxData) {
       return NextResponse.json(
         {
@@ -185,12 +185,13 @@ export async function GET(req: NextRequest) {
     }
 
     const streams: Record<string, string> = playerData.streams ?? {};
-
+    console.log("MEOWWWW", playerData);
     const finalM3u8Url =
       streams["auto"] ??
       streams["4k"] ??
       streams["1080p"] ??
       streams["720p"] ??
+      streams["360"] ??
       Object.values(streams)[0];
 
     if (!finalM3u8Url) {
