@@ -13,6 +13,7 @@ const supabase = createClient(
 const SHOWBOX_WORKERS = [
   "https://febbox.jinluxuz.workers.dev/",
   "https://febbox.mosangfour.workers.dev",
+  "https://febbox.zxcprime359.workers.dev/",
   "https://shy-pine-01bc.zxcprime366.workers.dev/",
   // add more here
 ];
