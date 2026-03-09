@@ -6,6 +6,7 @@ import { validateBackendToken } from "@/lib/validate-token";
 const SHOWBOX_WORKERS = [
   "https://mute-resonance-ab25.zxcprime362.workers.dev",
   "https://febbox.mosangfour.workers.dev",
+  "https://shy-pine-01bc.zxcprime366.workers.dev/",
   // add more here
 ];
 
