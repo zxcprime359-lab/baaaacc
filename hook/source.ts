@@ -40,7 +40,7 @@ export default function useSource({
     ],
     enabled: !!id && !!imdbId,
     queryFn: async () => {
-      if ([0, 1, 11, 2, 3, 4, 5, 6, 7].includes(server)) {
+      if ([0, 1, 11, 22, 2, 3, 4, 5, 6, 7].includes(server)) {
         const { f_token, f_ts } = generateFrontendToken(String(id));
 
         const tokenRes = await axios.post("/api/token", {
