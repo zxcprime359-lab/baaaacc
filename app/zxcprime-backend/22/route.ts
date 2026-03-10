@@ -584,8 +584,32 @@ export async function GET(req: NextRequest) {
       // ─────────────────────────────────────────────────────────────────────
       // STEP 1 — Search engine: get FebBox share link
       // ─────────────────────────────────────────────────────────────────────
-      const shareLink = await fetchShareLinkFromSearch(title, year);
+      // const shareLink = await fetchShareLinkFromSearch(title, year);
+      let shareLink: string | null;
 
+      try {
+        shareLink = await fetchShareLinkFromSearch(title, year);
+      } catch (err: any) {
+        return NextResponse.json(
+          {
+            success: false,
+            step: "search_engine",
+            error: err.message || "Search engine request failed",
+          },
+          { status: 500 },
+        );
+      }
+
+      if (!shareLink) {
+        return NextResponse.json(
+          {
+            success: false,
+            step: "search_engine",
+            error: "No FebBox share link found",
+          },
+          { status: 502 },
+        );
+      }
       console.log("shareLink from search", shareLink);
 
       if (!shareLink) {
@@ -619,24 +643,52 @@ export async function GET(req: NextRequest) {
       if (mediaType === "tv" && episode)
         shareQs.set("episode", String(episode));
 
-      const shareRes = await fetchWithTimeout(
-        `${FEBBOX_SHARE_WORKER}/?${shareQs}`,
-        {},
-        8000,
-      );
+      let shareRes;
 
-      if (!shareRes.ok) {
+      try {
+        shareRes = await fetchWithTimeout(
+          `${FEBBOX_SHARE_WORKER}/?${shareQs}`,
+          {},
+          8000,
+        );
+      } catch (err: any) {
         return NextResponse.json(
           {
             success: false,
-            error: "FebBox share worker failed",
-            status: shareRes.status,
+            step: "febbox_share_worker",
+            worker: FEBBOX_SHARE_WORKER,
+            error: err.message,
           },
           { status: 502 },
         );
       }
 
-      const shareData = await shareRes.json();
+      if (!shareRes || !shareRes.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            step: "febbox_share_worker",
+            status: shareRes?.status,
+            worker: FEBBOX_SHARE_WORKER,
+          },
+          { status: 502 },
+        );
+      }
+
+      let shareData;
+
+      try {
+        shareData = await shareRes.json();
+      } catch (err: any) {
+        return NextResponse.json(
+          {
+            success: false,
+            step: "share_worker_json",
+            error: "Invalid JSON returned by worker",
+          },
+          { status: 500 },
+        );
+      }
       // console.log("shareDataaaaaaaaaaaaaaaa", shareData);
       files = shareData?.files ?? [];
 
@@ -664,7 +716,16 @@ export async function GET(req: NextRequest) {
         files,
       ).catch((e: any) => console.warn("dbSave failed:", e.message));
     }
-
+    if (!files || files.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          step: "files_selection",
+          error: "No files returned from FebBox share",
+        },
+        { status: 404 },
+      );
+    }
     // ─────────────────────────────────────────────────────────────────────────
     // STEP 3 — FebBox player: always fresh (stream URLs expire)
     // ─────────────────────────────────────────────────────────────────────────
@@ -676,18 +737,33 @@ export async function GET(req: NextRequest) {
 
     const fid = bestFile?.data_id;
 
-    const playerRes = await fetchWithTimeout(
-      `${FEBBOX_PLAYER_WORKER}/?fid=${fid}&share_key=${shareToken}`,
-      {},
-      10000,
-    );
+    let playerRes;
 
-    if (!playerRes.ok) {
+    try {
+      playerRes = await fetchWithTimeout(
+        `${FEBBOX_PLAYER_WORKER}/?fid=${fid}&share_key=${shareToken}`,
+        {},
+        10000,
+      );
+    } catch (err: any) {
       return NextResponse.json(
         {
           success: false,
-          error: "FebBox player worker failed",
-          status: playerRes.status,
+          step: "febbox_player_worker",
+          worker: FEBBOX_PLAYER_WORKER,
+          error: err.message,
+        },
+        { status: 502 },
+      );
+    }
+
+    if (!playerRes || !playerRes.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          step: "febbox_player_worker",
+          status: playerRes?.status,
+          worker: FEBBOX_PLAYER_WORKER,
         },
         { status: 502 },
       );
