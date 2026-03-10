@@ -108,13 +108,14 @@ async function dbSave(
       stream_id: token.id,
       data_id: f.data_id,
       file_name: f.file_name,
-      file_size: null,
+      file_size: f.file_size,
       file_type: f.file_type,
       quality: f.quality,
       source: f.source,
       codec: f.codec,
       hdr: f.hdr,
       thumbnail: f.thumbnail,
+      episode: episode ? Number(episode) : null,
     }));
 
     if (fileRows.length > 0) {
