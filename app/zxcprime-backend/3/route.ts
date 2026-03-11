@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
 
     const sourceLink =
       media_type === "tv"
-        ? `https://api.madplay.site/api/movies/holly?id=${id}&season=${season}&episode=${episode}&type=series`
-        : `https://api.madplay.site/api/movies/holly?id=${id}&type=movie`;
+        ? `https://api.madplay.site/api/movies/holly?id=${id}&season=${season}&episode=${episode}&type=series&token=thestupidthings`
+        : `https://api.madplay.site/api/movies/holly?id=${id}&type=movie&token=thestupidthings`;
 
     // const res = await fetch(sourceLink, {
     //   headers: {
@@ -63,12 +63,14 @@ export async function GET(req: NextRequest) {
       sourceLink,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
           Referer: "https://uembed.xyz/",
+          Origin: "https://uembed.xyz",
         },
       },
       5000,
-    ); // 5-second timeout
+    );
 
     if (!res.ok) {
       return NextResponse.json(

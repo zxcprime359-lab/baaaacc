@@ -93,37 +93,22 @@ export async function GET(req: NextRequest) {
         { success: false, error: "No search results" },
         { status: 404 },
       );
-    // const normalizedSearch = title.trim().toLowerCase();
 
-    // const selectedItem = items.find((i: any) => {
-    //   const itemTitle = (i?.title || "").trim().toLowerCase();
-    //   return itemTitle === normalizedSearch;
-    // });
-
-    // if (!selectedItem) {
-    //   return NextResponse.json(
-    //     { success: false, error: "Exact movie not found" },
-    //     { status: 404 },
-    //   );
-    // }
-
-    // const subjectId = String(selectedItem?.subjectId);
-    // if (!subjectId)
-    //   return NextResponse.json(
-    //     { success: false, error: "subjectId not found" },
-    //     { status: 404 },
-    //   );
-
-    const selectedItem =
-      items.find((i: any) =>
-        (i?.title || "").toLowerCase().includes(title.toLowerCase()),
-      ) || items[0];
-    const subjectId = String(selectedItem?.subjectId);
-    if (!subjectId)
+    const selectedItem = items.find((i: any) =>
+      (i?.title || "").toLowerCase().includes(title.toLowerCase()),
+    );
+    if (!selectedItem)
+      return NextResponse.json(
+        { success: false, error: "Unavailable" },
+        { status: 404 },
+      );
+    const rawSubjectId = selectedItem?.subjectId;
+    if (!rawSubjectId)
       return NextResponse.json(
         { success: false, error: "subjectId not found" },
         { status: 404 },
       );
+    const subjectId = String(rawSubjectId);
 
     // Detail info
     const detailRes = await fetch(
@@ -165,6 +150,11 @@ export async function GET(req: NextRequest) {
     const sortedDownloads = downloads
       .filter((d: any) => d?.url && typeof d.url === "string")
       .sort((a: any, b: any) => (b.resolution || 0) - (a.resolution || 0));
+    if (!sortedDownloads.length)
+      return NextResponse.json(
+        { success: false, error: "No valid download URLs" },
+        { status: 404 },
+      );
     const videoUrl = sortedDownloads[0].url;
 
     const proxies = [

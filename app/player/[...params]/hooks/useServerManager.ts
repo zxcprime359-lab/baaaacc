@@ -42,22 +42,22 @@ export function useServerManager({
       name: "Icarus",
       server: 11,
       status: "queue",
-      desc: "Fast and stable.",
+      desc: "Vast Collection & Fast",
     },
     {
       name: "Atlas (NEW)",
       server: 22,
       status: "queue",
-      desc: "Stable, may include 4K and multi-language.",
+      desc: "Fast & Stable.",
     },
 
-    { name: "Daedalus I", server: 0, status: "queue", desc: "Main Server" },
+    { name: "Daedalus I", server: 0, status: "queue", desc: "Multi Audio Support" },
 
     {
       name: "Thanatos II",
       server: 1,
       status: "queue",
-      desc: "",
+      desc: "Alternative",
     },
     {
       name: "Aether III",
@@ -71,18 +71,18 @@ export function useServerManager({
       status: "queue",
       desc: "Built-In Subtitle",
     },
-    {
-      name: "Helios V",
-      server: 4,
-      status: "queue",
-      desc: "",
-    },
-    {
-      name: "Nyx VI",
-      server: 5,
-      status: "queue",
-      desc: "",
-    },
+    // {
+    //   name: "Helios V",
+    //   server: 4,
+    //   status: "queue",
+    //   desc: "",
+    // },
+    // {
+    //   name: "Nyx VI",
+    //   server: 5,
+    //   status: "queue",
+    //   desc: "",
+    // },
     {
       name: "Echo VII",
       server: 6,

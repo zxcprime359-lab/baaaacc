@@ -1,4 +1,3 @@
-import { encodeBase64Url } from "@/lib/base64";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { NextRequest, NextResponse } from "next/server";
 import { validateBackendToken } from "@/lib/token";
@@ -11,8 +10,8 @@ export async function GET(req: NextRequest) {
     const episode = req.nextUrl.searchParams.get("d");
     const ts = Number(req.nextUrl.searchParams.get("gago"));
     const token = req.nextUrl.searchParams.get("putangnamo")!;
-
     const f_token = req.nextUrl.searchParams.get("f_token")!;
+
     if (!id || !media_type || !ts || !token) {
       return NextResponse.json(
         { success: false, error: "need token" },
@@ -20,13 +19,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // ⏱ expire after 8 seconds
     if (Date.now() - Number(ts) > 8000) {
       return NextResponse.json(
         { success: false, error: "Invalid token" },
         { status: 403 },
       );
     }
+
     if (!validateBackendToken(id, f_token, ts, token)) {
       return NextResponse.json(
         { success: false, error: "Invalid token" },
@@ -34,7 +33,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // block direct /api access
     const referer = req.headers.get("referer") || "";
     if (
       !referer.includes("/api/") &&
@@ -49,7 +47,6 @@ export async function GET(req: NextRequest) {
     }
 
     const pathLink = `https://enc-dec.app/api/enc-vidlink?text=${id}`;
-
     const pathLinkResponse = await fetchWithTimeout(
       pathLink,
       {
@@ -60,7 +57,6 @@ export async function GET(req: NextRequest) {
       },
       5000,
     );
-
     const pathLinkData = await pathLinkResponse.json();
 
     const sourceLink =
@@ -95,65 +91,45 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const m3u8Url = data.stream.playlist; // e.g. https://storm.vodvidl.site/proxy/file2/.../playlist.m3u8?...
-
-    // Extract only the pathname (everything starting from /proxy/...)
+    const m3u8Url = data.stream.playlist;
     const urlObj = new URL(m3u8Url);
-    const proxyPath = urlObj.pathname; // → /proxy/file2/.../playlist.m3u8
-
-    // Optional: preserve query params if needed (e.g. host=), but we don't need headers anymore
-    const search = urlObj.search; // usually has ?headers=...&host=...
-
-    //proxy links
-    //https://damp-bonus-5625.mosangfour.workers.dev/
-    //https://square-darkness-1efb.amenohabakiri174.workers.dev/
-    //https://orange-poetry-e481.jindaedalus2.workers.dev/
-    //https://long-frog-ec4e.coupdegrace21799.workers.dev/
-    //https://morning-unit-723b.jinluxus303.workers.dev/
-    //https://dark-scene-567a.jinluxuz.workers.dev/
+    const proxyPath = urlObj.pathname;
+    const searchParams = new URLSearchParams(urlObj.search.slice(1));
+    const search = searchParams.toString() ? `?${searchParams.toString()}` : "";
 
     const proxyLinks = [
-      `https://blue-hat-477a.jerometecson333.workers.dev`,
-
-      `https://square-darkness-1efb.amenohabakiri174.workers.dev`,
-      `https://orange-poetry-e481.jindaedalus2.workers.dev`,
-      `https://long-frog-ec4e.coupdegrace21799.workers.dev`,
-
-      `https://dark-scene-567a.jinluxuz.workers.dev`,
+      "https://blue-star-dd7b.jinluxuz.workers.dev",
+      "https://orange-poetry-e481.jindaedalus2.workers.dev",
     ];
 
-    let finalProxy: string | null = null;
-    for (const proxy of proxyLinks) {
-      const testUrl = `${proxy}${proxyPath}${search}`;
-      try {
-        const head = await fetch(testUrl, {
-          method: "HEAD",
-          signal: AbortSignal.timeout(1500),
-        });
-        if (head.ok) {
-          finalProxy = testUrl;
-          break;
-        }
-      } catch {
-        // try next proxy
-      }
-    }
-    if (!finalProxy) {
+    const proxyUrls = proxyLinks.map((p) => `${p}${proxyPath}${search}`);
+    const workingProxy = await getWorkingProxy(proxyUrls);
+
+    if (!workingProxy) {
       return NextResponse.json(
         { success: false, error: "All proxies down" },
         { status: 503 },
       );
     }
 
-    return NextResponse.json({
-      success: 200,
-      link: finalProxy,
-      type: "hls",
-    });
+    return NextResponse.json({ success: 200, link: workingProxy, type: "hls" });
   } catch (err) {
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 },
     );
   }
+}
+
+async function getWorkingProxy(urls: string[]) {
+  for (const url of urls) {
+    try {
+      const res = await fetchWithTimeout(url, { method: "GET" }, 3000);
+      console.log("Proxy check:", url, res.status);
+      if (res.ok) return url;
+    } catch (e) {
+      console.log("Proxy failed:", url, e);
+    }
+  }
+  return null;
 }

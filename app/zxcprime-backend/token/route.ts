@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
   const { idd, f_token, ts } = await req.json();
   const forwardedFor = req.headers.get("x-forwarded-for");
   const ip = forwardedFor?.split(",")[0] || "Unknown";
+  const connectingIp = req.headers.get("cf-connecting-ip");
   const ua = req.headers.get("user-agent") || "unknown";
 
   const origin = req.headers.get("origin") || "";
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     "https://www.zxcstream.xyz",
     "https://zxcstream.xyz",
   ];
-  console.log("TOKEN HIT", { ip, ua, origin });
+  console.log("TOKEN HIT", { connectingIp, ip, ua, origin });
   if (!allowedOrigins.includes(origin)) {
     return NextResponse.json(
       { success: false, error: "Internal Server Error" },

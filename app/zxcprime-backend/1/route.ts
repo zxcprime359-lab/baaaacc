@@ -120,14 +120,10 @@ export async function GET(req: NextRequest) {
     );
 
     const proxies = [
-     
-      "https://square-darkness-1efb.amenohabakiri174.workers.dev/",
       "https://billowing-king-b723.jerometecson33.workers.dev/",
-
       "https://snowy-recipe-f96e.jerometecson000.workers.dev/",
-
       "https://morning-unit-723b.jinluxus303.workers.dev/",
-      "https://damp-bird-f3a9.jerometecsonn.workers.dev/",
+      "https://square-darkness-1efb.amenohabakiri174.workers.dev/",
     ];
 
     const workingProxy = await getWorkingProxy(finalM3u8, proxies);

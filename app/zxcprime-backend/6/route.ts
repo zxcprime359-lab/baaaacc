@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { success: false, error: "Upstream request failed" },
+        { success: false, error: "U1pstream request failed" },
         { status: res.status },
       );
     }

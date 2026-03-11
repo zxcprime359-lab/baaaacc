@@ -668,18 +668,17 @@ export default function Player() {
             >
               <div className=" flex justify-between items-end gap-6">
                 <div>
-                  <p className="lg:text-xl text-sm text-gray-200 flex  items-center gap-3 ">
-                    <span className="bg-red-500 w-0.5 lg:h-6 h-4 rounded-full"></span>
+                  <p className="lg:text-base text-sm text-gray-200 flex  items-center gap-3 ">
                     You're watching
                   </p>
-                  <h1 className="lg:text-4xl text-2xl font-bold lg:mt-2 mt-1 line-clamp-1">
+                  <h1 className="lg:text-4xl text-2xl font-bold lg:mt-1 mt-1 line-clamp-1">
                     {metadata?.title || metadata?.name} (
                     {(
                       metadata?.release_date || metadata?.first_air_date
                     )?.slice(0, 4)}
                     )
                   </h1>
-                  <span className="flex gap-3  text-muted-foreground lg:text-lg lg:mt-3 mt-1.5">
+                  <span className="flex gap-3  text-muted-foreground lg:text-base lg:mt-1 mt-1.5">
                     <p className="">{metadata?.genres[0].name}</p> |
                     <p className="">{metadata?.status}</p>
                     {media_type === "tv" && (
@@ -971,7 +970,7 @@ export default function Player() {
                 </div>
               ) : (
                 <div className="flex lg:justify-between justify-center items-center gap-4">
-                  <span className="flex lg:gap-8 gap-6 items-center">
+                  <span className="flex lg:gap-6 gap-6 items-center">
                     <AnimatePresence mode="wait">
                       <button
                         className="relative flex justify-center items-center size-10"
@@ -1148,7 +1147,7 @@ export default function Player() {
                       </button>
                     )}
                   </span>
-                  <span className="flex lg:gap-8 gap-6 items-center">
+                  <span className="flex lg:gap-6 gap-6 items-center">
                     <PlayerSettings
                       quality={quality}
                       selectedQualty={selectedQuality}
