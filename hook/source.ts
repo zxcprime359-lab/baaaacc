@@ -55,7 +55,7 @@ export default function useSource({
             media_type === "tv" ? `&c=${season}&d=${episode}` : ""
           }${
             imdbId !== null ? `&e=${imdbId}` : ""
-          }&gago=${ts}&putanginamo=${token}&f_token=${f_token}&f=${title}&g=${year}`,
+          }&gago=${ts}&putangnamo=${token}&f_token=${f_token}&f=${title}&g=${year}`,
         );
 
         return res.data;

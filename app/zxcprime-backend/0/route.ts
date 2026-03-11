@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const episode = req.nextUrl.searchParams.get("d");
     const imdbId = req.nextUrl.searchParams.get("e");
     const ts = Number(req.nextUrl.searchParams.get("gago"));
-    const token = req.nextUrl.searchParams.get("putanginamo")!;
+    const token = req.nextUrl.searchParams.get("putangnamo")!;
 
     const f_token = req.nextUrl.searchParams.get("f_token")!;
     if (!id || !media_type || !ts || !token) {
