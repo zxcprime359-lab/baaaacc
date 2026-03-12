@@ -9,7 +9,7 @@ const supabase = createClient(
 
 const WORKER_URL = "https://main.jinluxuz.workers.dev";
 const WORKER_SECRET = "xk92mZpQ7vLw3nRt";
-const FEBBOX_PLAYER_WORKER = "https://febbox3.jinluxuz.workers.dev";
+const FEBBOX_PLAYER_WORKER = "https://febbox3.jinluxusz.workers.dev";
 
 async function dbGet(
   tmdbId: string,
