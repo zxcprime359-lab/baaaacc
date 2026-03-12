@@ -20,7 +20,7 @@ export default function ZXCPlayer() {
     ...(media_type === "tv" && season && episode ? { season, episode } : {}),
   }).toString();
 
-  const path = `/api/backup?${query}`;
+  const path = `/api/backupp?${query}`;
   console.log(path);
   const triggerAd = useAdStore((state) => state.triggerAd);
   return (
