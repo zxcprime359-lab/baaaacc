@@ -221,6 +221,9 @@ export async function GET(req: NextRequest) {
           player_raw_preview: playerRaw.substring(0, 1000),
           player_success: playerData.success ?? null,
           player_streams_keys: Object.keys(playerData.streams ?? {}),
+          // ── new ──
+          traffic_probe: playerData.debug?.traffic_probe ?? null,
+          worker_attempts: playerData.debug?.attempts ?? null,
         },
       });
     }
