@@ -138,6 +138,38 @@ export async function GET(req: NextRequest) {
 
     const cached = await dbGet(tmdbId, mediaType, season, episode);
 
+    // if (cached) {
+    //   const shareToken = cached.share_token;
+    //   const files = cached.files ?? [];
+
+    //   const bestFile = selectBestFile(files);
+
+    //   if (!bestFile)
+    //     return NextResponse.json(
+    //       { success: false, error: "No files found" },
+    //       { status: 404 },
+    //     );
+
+    //   const playerRes = await fetch(
+    //     `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
+    //   );
+
+    //   const playerData = await playerRes.json();
+    //   const streams: Record<string, string> = playerData.streams ?? {};
+    //   const finalUrl = selectBestStream(streams);
+
+    //   return NextResponse.json({
+    //     success: true,
+    //     from_db: true,
+    //     link: finalUrl,
+    //     type: "hls",
+    //     streams,
+    //     audio_tracks: playerData.audio_tracks ?? null,
+    //     subtitles: playerData.subtitles ?? null,
+    //     file: bestFile,
+    //   });
+    // }
+
     if (cached) {
       const shareToken = cached.share_token;
       const files = cached.files ?? [];
@@ -150,11 +182,22 @@ export async function GET(req: NextRequest) {
           { status: 404 },
         );
 
-      const playerRes = await fetch(
-        `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
-      );
+      let playerData: any = {};
+      let playerRaw = "";
+      let playerStatus = 0;
+      let playerError = null;
 
-      const playerData = await playerRes.json();
+      try {
+        const playerRes = await fetch(
+          `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
+        );
+        playerStatus = playerRes.status;
+        playerRaw = await playerRes.text();
+        playerData = JSON.parse(playerRaw);
+      } catch (err: any) {
+        playerError = err.message;
+      }
+
       const streams: Record<string, string> = playerData.streams ?? {};
       const finalUrl = selectBestStream(streams);
 
@@ -167,6 +210,14 @@ export async function GET(req: NextRequest) {
         audio_tracks: playerData.audio_tracks ?? null,
         subtitles: playerData.subtitles ?? null,
         file: bestFile,
+        // --- DEBUG (remove after fixing) ---
+        _debug: {
+          player_status: playerStatus,
+          player_error: playerError,
+          player_raw_preview: playerRaw.substring(0, 1000),
+          player_success: playerData.success ?? null,
+          player_streams_keys: Object.keys(playerData.streams ?? {}),
+        },
       });
     }
 
