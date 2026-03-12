@@ -186,13 +186,14 @@ export async function GET(req: NextRequest) {
       let playerRaw = "";
       let playerStatus = 0;
       let playerError = null;
-
+      let playerCfRay = ""; // ← add here
       try {
         const playerRes = await fetch(
           `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
         );
         playerStatus = playerRes.status;
         playerRaw = await playerRes.text();
+        playerCfRay = playerRes.headers.get("cf-ray") ?? "none";
         playerData = JSON.parse(playerRaw);
       } catch (err: any) {
         playerError = err.message;
@@ -207,13 +208,16 @@ export async function GET(req: NextRequest) {
         link: finalUrl,
         type: "hls",
         streams,
-        audio_tracks: playerData.audio_tracks ?? null,
-        subtitles: playerData.subtitles ?? null,
-        file: bestFile,
+        // audio_tracks: playerData.audio_tracks ?? null,
+        // subtitles: playerData.subtitles ?? null,
+        // file: bestFile,
         // --- DEBUG (remove after fixing) ---
         _debug: {
           player_status: playerStatus,
           player_error: playerError,
+          player_cf_ray: playerCfRay,
+          player_datacenter: playerCfRay?.split("-")?.[1] ?? "unknown",
+          vercel_region: process.env.VERCEL_REGION ?? "unknown",
           player_raw_preview: playerRaw.substring(0, 1000),
           player_success: playerData.success ?? null,
           player_streams_keys: Object.keys(playerData.streams ?? {}),
