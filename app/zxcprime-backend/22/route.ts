@@ -212,19 +212,19 @@ export async function GET(req: NextRequest) {
         // subtitles: playerData.subtitles ?? null,
         // file: bestFile,
         // --- DEBUG (remove after fixing) ---
-        _debug: {
-          player_status: playerStatus,
-          player_error: playerError,
-          player_cf_ray: playerCfRay,
-          player_datacenter: playerCfRay?.split("-")?.[1] ?? "unknown",
-          vercel_region: process.env.VERCEL_REGION ?? "unknown",
-          player_raw_preview: playerRaw.substring(0, 1000),
-          player_success: playerData.success ?? null,
-          player_streams_keys: Object.keys(playerData.streams ?? {}),
-          // ── new ──
-          traffic_probe: playerData.debug?.traffic_probe ?? null,
-          worker_attempts: playerData.debug?.attempts ?? null,
-        },
+        // _debug: {
+        //   player_status: playerStatus,
+        //   player_error: playerError,
+        //   player_cf_ray: playerCfRay,
+        //   player_datacenter: playerCfRay?.split("-")?.[1] ?? "unknown",
+        //   vercel_region: process.env.VERCEL_REGION ?? "unknown",
+        //   player_raw_preview: playerRaw.substring(0, 1000),
+        //   player_success: playerData.success ?? null,
+        //   player_streams_keys: Object.keys(playerData.streams ?? {}),
+        //   // ── new ──
+        //   traffic_probe: playerData.debug?.traffic_probe ?? null,
+        //   worker_attempts: playerData.debug?.attempts ?? null,
+        // },
       });
     }
 
