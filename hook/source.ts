@@ -5,6 +5,7 @@ export interface SourceTypes {
   success: boolean;
   link: string;
   type: string;
+  has4K?: boolean;
 }
 
 export default function useSource({
@@ -16,6 +17,7 @@ export default function useSource({
   server = 1,
   title,
   year,
+  quality,
 }: {
   media_type: string;
   id: number;
@@ -25,6 +27,7 @@ export default function useSource({
   server: number;
   title: string;
   year: string;
+  quality?: "4k" | null;
 }) {
   const query = useQuery<SourceTypes>({
     queryKey: [
@@ -37,6 +40,7 @@ export default function useSource({
       server,
       title,
       year,
+      quality,
     ],
     enabled: !!id && !!imdbId,
     queryFn: async () => {
@@ -49,13 +53,14 @@ export default function useSource({
           ts: f_ts,
         });
         const { ts, token } = tokenRes.data;
-
+        const qualityParam =
+          server === 22 && quality ? `&quality=${quality}` : "";
         const res = await axios.get(
           `/api/${server}?a=${id}&b=${media_type}${
             media_type === "tv" ? `&c=${season}&d=${episode}` : ""
           }${
             imdbId !== null ? `&e=${imdbId}` : ""
-          }&gago=${ts}&putangnamo=${token}&f_token=${f_token}&f=${title}&g=${year}`,
+          }&gago=${ts}&putangnamo=${token}&f_token=${f_token}&f=${title}&g=${year}${qualityParam}`,
         );
 
         return res.data;

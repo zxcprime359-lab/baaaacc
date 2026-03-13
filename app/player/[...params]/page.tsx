@@ -14,6 +14,8 @@ import "ldrs/react/LineSpinner.css";
 
 import {
   IconArrowLeft,
+  IconBadge4k,
+  IconBadge4kFilled,
   IconBadgeCc,
   IconBadgeCcFilled,
   IconChevronLeft,
@@ -113,6 +115,8 @@ export default function Player() {
     handleSelectServer,
     updateServerStatus,
     handleRefreshServers,
+    serverQuality,
+    setServerQuality,
   } = useServerManager({
     media_type,
     id,
@@ -518,14 +522,16 @@ export default function Player() {
                     <IconArrowLeft className="absolute lg:size-10 size-8 text-gray-300" />
                   </button>
                 )}
-                <PlayerServer
-                  servers={servers}
-                  lockTimer={lockTimer}
-                  resetTimer={resetTimer}
-                  server={server}
-                  setServer={handleSelectServer}
-                  serverIndex={serverIndex}
-                />
+                <div className="">
+                  <PlayerServer
+                    servers={servers}
+                    lockTimer={lockTimer}
+                    resetTimer={resetTimer}
+                    server={server}
+                    setServer={handleSelectServer}
+                    serverIndex={serverIndex}
+                  />
+                </div>
               </div>
             </motion.div>
           )}
@@ -1170,6 +1176,37 @@ export default function Player() {
                       />
                     )}
                     {/* <IconLayoutSidebarRightExpand className="size-9.5" />{" "} */}
+                    {server === 22 && source?.has4K && (
+                      <button
+                        onPointerMove={(e) => {
+                          e.stopPropagation();
+                          if (e.pointerType === "mouse") {
+                            lockTimer();
+                          }
+                        }}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          if (e.pointerType === "touch") {
+                            setServerQuality((q) => (q === "4k" ? null : "4k"));
+                            resetTimer();
+                          }
+                        }}
+                        onPointerUp={(e) => {
+                          e.stopPropagation();
+                          if (e.pointerType === "mouse") {
+                            setServerQuality((q) => (q === "4k" ? null : "4k"));
+                            resetTimer();
+                          }
+                        }}
+                        className="font-medium"
+                      >
+                        {serverQuality === "4k" ? (
+                          <IconBadge4kFilled className="lg:size-10.5 size-8.5 ext-gray-200" />
+                        ) : (
+                          <IconBadge4k className="lg:size-10.5 size-8.5 text-muted-foreground ext-gray-200" />
+                        )}
+                      </button>
+                    )}
                     <button
                       onPointerMove={(e) => {
                         e.stopPropagation();

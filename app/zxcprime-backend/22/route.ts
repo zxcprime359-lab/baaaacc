@@ -82,26 +82,41 @@ async function dbSave(
     console.warn("[dbSave] exception:", err.message);
   }
 }
-const MAX_FILE_SIZE_GB = 25;
-function selectBestFile(files: any[]) {
+const MAX_FILE_SIZE_GB = 40;
+function selectBestFile(files: any[], prefer4K = false) {
   const qualify = (f: any) =>
-    parseFileSizeGB(f.file_size) <= MAX_FILE_SIZE_GB && f.source !== "CAM";
+    parseFileSizeGB(f.file_size) <= MAX_FILE_SIZE_GB &&
+    f.source !== "CAM" &&
+    !f.file_name?.toUpperCase().includes("CAM");
 
-  // Sort eligible files by size ascending so smallest acceptable wins
   const sorted = [...files].sort(
     (a, b) => parseFileSizeGB(a.file_size) - parseFileSizeGB(b.file_size),
   );
 
+  if (prefer4K) {
+    return (
+      sorted.find((f) => qualify(f) && f.quality === "4K") ??
+      sorted.find((f) => qualify(f) && f.quality === "1080p") ??
+      sorted.find((f) => qualify(f)) ??
+      files[0]
+    );
+  }
+
   return (
-    sorted.find((f) => qualify(f) && f.quality === "4K") ??
     sorted.find((f) => qualify(f) && f.quality === "1080p") ??
-    sorted.find((f) => qualify(f) && f.quality !== "unknown") ??
+    sorted.find((f) => qualify(f) && f.quality === "4K") ??
     sorted.find((f) => qualify(f)) ??
     files[0]
   );
 }
-function selectBestStream(streams: Record<string, string>): string {
-  const priority = ["4k", "1080p", "720p", "360p", "auto"];
+function selectBestStream(
+  streams: Record<string, string>,
+  prefer4K = false,
+): string {
+  const priority = prefer4K
+    ? ["4k", "1080p", "720p", "360p", "auto"]
+    : ["1080p", "720p", "360p", "4k", "auto"];
+
   for (const q of priority) {
     if (streams[q]) return streams[q];
   }
@@ -128,6 +143,8 @@ export async function GET(req: NextRequest) {
     const ts = Number(searchParams.get("gago"));
     const token = searchParams.get("putangnamo")!;
     const f_token = searchParams.get("f_token")!;
+    const preferQuality = searchParams.get("quality"); // "4k" | null
+    const prefer4K = preferQuality === "4k";
 
     if (!tmdbId || !mediaType || !title || !year || !ts || !token)
       return NextResponse.json(
@@ -153,7 +170,7 @@ export async function GET(req: NextRequest) {
       const shareToken = cached.share_token;
       const files = cached.files ?? [];
       console.log("FILESSS", files);
-      const bestFile = selectBestFile(files);
+      const bestFile = selectBestFile(files, prefer4K);
 
       if (!bestFile)
         return NextResponse.json(
@@ -167,14 +184,20 @@ export async function GET(req: NextRequest) {
 
       const playerData = await playerRes.json();
       const streams: Record<string, string> = playerData.streams ?? {};
-      const finalUrl = selectBestStream(streams);
+      const finalUrl = selectBestStream(streams, prefer4K);
 
       return NextResponse.json({
         success: true,
-        from_db: true,
+        from: true,
         link: finalUrl,
         type: "hls",
-        streams,
+        has4K: files.some(
+          (f: any) =>
+            f.quality === "4K" &&
+            !f.file_name?.toUpperCase().includes("CAM") &&
+            f.source !== "CAM",
+        ),
+        // streams,
         // audio_tracks: playerData.audio_tracks ?? null,
         // subtitles: playerData.subtitles ?? null,
         // file: bestFile,
@@ -205,7 +228,7 @@ export async function GET(req: NextRequest) {
         { status: 404 },
       );
 
-    const bestFile = selectBestFile(files);
+    const bestFile = selectBestFile(files, prefer4K);
 
     dbSave(tmdbId, mediaType, season, episode, year, shareToken, files).catch(
       (e: any) => console.warn("dbSave failed:", e.message),
@@ -217,17 +240,23 @@ export async function GET(req: NextRequest) {
 
     const playerData = await playerRes.json();
     const streams: Record<string, string> = playerData.streams ?? {};
-    const finalUrl = selectBestStream(streams);
+    const finalUrl = selectBestStream(streams, prefer4K);
 
     return NextResponse.json({
       success: true,
-      from_db: false,
+      from: false,
       link: finalUrl,
       type: "hls",
-      streams,
-      audio_tracks: playerData.audio_tracks ?? null,
-      subtitles: playerData.subtitles ?? null,
-      file: bestFile,
+      has4K: files.some(
+        (f: any) =>
+          f.quality === "4K" &&
+          !f.file_name?.toUpperCase().includes("CAM") &&
+          f.source !== "CAM",
+      ),
+      // streams,
+      // audio_tracks: playerData.audio_tracks ?? null,
+      // subtitles: playerData.subtitles ?? null,
+      // file: bestFile,
     });
   } catch (err: any) {
     console.error("API Error:", err);

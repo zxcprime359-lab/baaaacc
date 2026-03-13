@@ -127,6 +127,7 @@ export function useServerManager({
   const [playing, setPlaying] = useState(false);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const controls = useAnimation();
+  const [serverQuality, setServerQuality] = useState<"4k" | null>(null);
 
   const {
     data: source,
@@ -141,6 +142,7 @@ export function useServerManager({
     imdbId,
     title,
     year,
+    quality: serverQuality,
   });
 
   const updateServerStatus = (index: number, status: ServerTypes["status"]) =>
@@ -232,26 +234,29 @@ export function useServerManager({
   };
 
   useEffect(() => {
-    // Use requestAnimationFrame to ensure DOM is ready
-    const timer = requestAnimationFrame(() => {
-      const container = containerRef.current;
-      const activeItem = itemRefs.current[serverIndex];
-      if (!container || !activeItem) return;
+    const container = containerRef.current;
+    const activeItem = itemRefs.current[serverIndex];
+    if (!container || !activeItem) return;
 
-      console.log("meow");
-      const offset =
-        activeItem.offsetTop +
-        activeItem.offsetHeight / 2 -
-        container.clientHeight / 2;
-      console.log("offset", offset);
+    const target =
+      activeItem.offsetTop -
+      container.clientHeight / 2 +
+      activeItem.clientHeight / 2;
 
-      controls.start({
-        y: -offset,
-        transition: { type: "spring", stiffness: 150, damping: 25 },
-      });
-    });
+    const start = container.scrollTop;
+    const distance = target - start;
+    const duration = 800;
+    let startTime: number | null = null;
 
-    return () => cancelAnimationFrame(timer);
+    const animate = (time: number) => {
+      if (!startTime) startTime = time;
+      const progress = Math.min((time - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      container.scrollTop = start + distance * ease;
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
   }, [serverIndex]);
 
   return {
@@ -265,5 +270,7 @@ export function useServerManager({
     handleSelectServer,
     updateServerStatus,
     handleRefreshServers,
+    serverQuality,
+    setServerQuality,
   };
 }
