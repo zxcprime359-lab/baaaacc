@@ -82,26 +82,37 @@ async function dbSave(
     console.warn("[dbSave] exception:", err.message);
   }
 }
-
+const MAX_FILE_SIZE_GB = 25;
 function selectBestFile(files: any[]) {
+  const qualify = (f: any) =>
+    parseFileSizeGB(f.file_size) <= MAX_FILE_SIZE_GB && f.source !== "CAM";
+
+  // Sort eligible files by size ascending so smallest acceptable wins
+  const sorted = [...files].sort(
+    (a, b) => parseFileSizeGB(a.file_size) - parseFileSizeGB(b.file_size),
+  );
+
   return (
-    files.find((f) => f.source !== "CAM" && f.quality === "4K") ??
-    files.find((f) => f.source !== "CAM" && f.quality === "1080p") ??
-    files.find((f) => f.source !== "CAM" && f.quality !== "unknown") ??
+    sorted.find((f) => qualify(f) && f.quality === "4K") ??
+    sorted.find((f) => qualify(f) && f.quality === "1080p") ??
+    sorted.find((f) => qualify(f) && f.quality !== "unknown") ??
+    sorted.find((f) => qualify(f)) ??
     files[0]
   );
 }
-
 function selectBestStream(streams: Record<string, string>): string {
-  return (
-    streams["1080p"] ??
-    streams["auto"] ??
-    streams["4K"] ??
-    streams["4k"] ??
-    streams["720p"] ??
-    streams["360p"] ??
-    Object.values(streams)[0]
-  );
+  const priority = ["4k", "1080p", "720p", "360p", "auto"];
+  for (const q of priority) {
+    if (streams[q]) return streams[q];
+  }
+  return Object.values(streams)[0];
+}
+function parseFileSizeGB(sizeStr: string): number {
+  if (!sizeStr) return 0;
+  const match = sizeStr.match(/([\d.]+)\s*(GB|MB)/i);
+  if (!match) return 0;
+  const val = parseFloat(match[1]);
+  return match[2].toUpperCase() === "GB" ? val : val / 1024;
 }
 
 export async function GET(req: NextRequest) {
@@ -138,42 +149,10 @@ export async function GET(req: NextRequest) {
 
     const cached = await dbGet(tmdbId, mediaType, season, episode);
 
-    // if (cached) {
-    //   const shareToken = cached.share_token;
-    //   const files = cached.files ?? [];
-
-    //   const bestFile = selectBestFile(files);
-
-    //   if (!bestFile)
-    //     return NextResponse.json(
-    //       { success: false, error: "No files found" },
-    //       { status: 404 },
-    //     );
-
-    //   const playerRes = await fetch(
-    //     `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
-    //   );
-
-    //   const playerData = await playerRes.json();
-    //   const streams: Record<string, string> = playerData.streams ?? {};
-    //   const finalUrl = selectBestStream(streams);
-
-    //   return NextResponse.json({
-    //     success: true,
-    //     from_db: true,
-    //     link: finalUrl,
-    //     type: "hls",
-    //     streams,
-    //     audio_tracks: playerData.audio_tracks ?? null,
-    //     subtitles: playerData.subtitles ?? null,
-    //     file: bestFile,
-    //   });
-    // }
-
     if (cached) {
       const shareToken = cached.share_token;
       const files = cached.files ?? [];
-
+      console.log("FILESSS", files);
       const bestFile = selectBestFile(files);
 
       if (!bestFile)
@@ -182,23 +161,11 @@ export async function GET(req: NextRequest) {
           { status: 404 },
         );
 
-      let playerData: any = {};
-      let playerRaw = "";
-      let playerStatus = 0;
-      let playerError = null;
-      let playerCfRay = ""; // ← add here
-      try {
-        const playerRes = await fetch(
-          `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
-        );
-        playerStatus = playerRes.status;
-        playerRaw = await playerRes.text();
-        playerCfRay = playerRes.headers.get("cf-ray") ?? "none";
-        playerData = JSON.parse(playerRaw);
-      } catch (err: any) {
-        playerError = err.message;
-      }
+      const playerRes = await fetch(
+        `${FEBBOX_PLAYER_WORKER}/?fid=${bestFile.data_id}&share_key=${shareToken}`,
+      );
 
+      const playerData = await playerRes.json();
       const streams: Record<string, string> = playerData.streams ?? {};
       const finalUrl = selectBestStream(streams);
 
@@ -211,20 +178,6 @@ export async function GET(req: NextRequest) {
         // audio_tracks: playerData.audio_tracks ?? null,
         // subtitles: playerData.subtitles ?? null,
         // file: bestFile,
-        // --- DEBUG (remove after fixing) ---
-        // _debug: {
-        //   player_status: playerStatus,
-        //   player_error: playerError,
-        //   player_cf_ray: playerCfRay,
-        //   player_datacenter: playerCfRay?.split("-")?.[1] ?? "unknown",
-        //   vercel_region: process.env.VERCEL_REGION ?? "unknown",
-        //   player_raw_preview: playerRaw.substring(0, 1000),
-        //   player_success: playerData.success ?? null,
-        //   player_streams_keys: Object.keys(playerData.streams ?? {}),
-        //   // ── new ──
-        //   traffic_probe: playerData.debug?.traffic_probe ?? null,
-        //   worker_attempts: playerData.debug?.attempts ?? null,
-        // },
       });
     }
 
