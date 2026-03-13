@@ -234,29 +234,26 @@ export function useServerManager({
   };
 
   useEffect(() => {
-    const container = containerRef.current;
-    const activeItem = itemRefs.current[serverIndex];
-    if (!container || !activeItem) return;
+    // Use requestAnimationFrame to ensure DOM is ready
+    const timer = requestAnimationFrame(() => {
+      const container = containerRef.current;
+      const activeItem = itemRefs.current[serverIndex];
+      if (!container || !activeItem) return;
 
-    const target =
-      activeItem.offsetTop -
-      container.clientHeight / 2 +
-      activeItem.clientHeight / 2;
+      console.log("meow");
+      const offset =
+        activeItem.offsetTop +
+        activeItem.offsetHeight / 2 -
+        container.clientHeight / 2;
+      console.log("offset", offset);
 
-    const start = container.scrollTop;
-    const distance = target - start;
-    const duration = 800;
-    let startTime: number | null = null;
+      controls.start({
+        y: -offset,
+        transition: { type: "spring", stiffness: 150, damping: 25 },
+      });
+    });
 
-    const animate = (time: number) => {
-      if (!startTime) startTime = time;
-      const progress = Math.min((time - startTime) / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3);
-      container.scrollTop = start + distance * ease;
-      if (progress < 1) requestAnimationFrame(animate);
-    };
-
-    requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(timer);
   }, [serverIndex]);
 
   return {

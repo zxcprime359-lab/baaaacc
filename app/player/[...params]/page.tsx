@@ -887,6 +887,37 @@ export default function Player() {
                       <IconBadgeCc className="lg:size-10.5 size-8.5 text-gray-200" />
                     )}
                   </button>
+                  {server === 22 && source?.has4K && (
+                    <button
+                      onPointerMove={(e) => {
+                        e.stopPropagation();
+                        if (e.pointerType === "mouse") {
+                          lockTimer();
+                        }
+                      }}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        if (e.pointerType === "touch") {
+                          setServerQuality((q) => (q === "4k" ? null : "4k"));
+                          resetTimer();
+                        }
+                      }}
+                      onPointerUp={(e) => {
+                        e.stopPropagation();
+                        if (e.pointerType === "mouse") {
+                          setServerQuality((q) => (q === "4k" ? null : "4k"));
+                          resetTimer();
+                        }
+                      }}
+                      className="font-medium"
+                    >
+                      {serverQuality === "4k" ? (
+                        <IconBadge4kFilled className="lg:size-10.5 size-8.5 ext-gray-200" />
+                      ) : (
+                        <IconBadge4k className="lg:size-10.5 size-8.5 text-muted-foreground ext-gray-200" />
+                      )}
+                    </button>
+                  )}
                   <PlayerSettings
                     quality={quality}
                     selectedQualty={selectedQuality}
